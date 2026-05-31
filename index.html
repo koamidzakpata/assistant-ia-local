@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistant IA Local</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #0f1117;
+            color: #ffffff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── En-tête ── */
+        header {
+            background-color: #1a1d27;
+            padding: 16px 30px;
+            border-bottom: 2px solid #2ecc71;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        header h1 { font-size: 20px; color: #2ecc71; letter-spacing: 1px; }
+        header p  { font-size: 12px; color: #888; }
+
+        .badge {
+            background-color: #2ecc71;
+            color: #000;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-left: auto;
+        }
+
+        #btn-nouvelle-conv {
+            background-color: transparent;
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 15px;
+        }
+
+        #btn-nouvelle-conv:hover {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        /* ── Compteur messages ── */
+        #compteur {
+            font-size: 11px;
+            color: #555;
+            padding: 6px 30px;
+            background-color: #13151f;
+            border-bottom: 1px solid #1a1d27;
+        }
+
+        /* ── Modes ── */
+        #modes {
+            background-color: #13151f;
+            padding: 10px 30px;
+            display: flex;
+            gap: 10px;
+            border-bottom: 1px solid #2a2d3a;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        #modes span { font-size: 12px; color: #888; margin-right: 5px; }
+
+        .btn-mode {
+            background-color: #1a1d27;
+            color: #ccc;
+            border: 1px solid #2a2d3a;
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-mode:hover { border-color: #2ecc71; color: #2ecc71; }
+        .btn-mode.actif {
+            background-color: #2ecc71;
+            color: #000;
+            border-color: #2ecc71;
+            font-weight: bold;
+        }
+
+        /* ── Conversation ── */
+        #conversation {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .message {
+            max-width: 75%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.7;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.utilisateur {
+            background-color: #2ecc71;
+            color: #000;
+            align-self: flex-end;
+            border-bottom-right-radius: 3px;
+        }
+
+        .message.ia {
+            background-color: #1a1d27;
+            color: #e0e0e0;
+            align-self: flex-start;
+            border-bottom-left-radius: 3px;
+            border: 1px solid #2a2d3a;
+        }
+
+        .message .auteur {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            opacity: 0.7;
+        }
+
+        .badge-mode {
+            font-size: 10px;
+            background-color: #2a2d3a;
+            color: #2ecc71;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 8px;
+        }
+
+        .message .actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-copier {
+            background: none;
+            border: 1px solid #2a2d3a;
+            color: #888;
+            border-radius: 5px;
+            padding: 3px 10px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-copier:hover { border-color: #2ecc71; color: #2ecc71; }
+
+        /* ── Chargement ── */
+        .chargement {
+            background-color: #1a1d27;
+            color: #888;
+            align-self: flex-start;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid #2a2d3a;
+            font-size: 14px;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.4; }
+        }
+
+        /* ── Saisie ── */
+        #zone-saisie {
+            background-color: #1a1d27;
+            padding: 16px 30px;
+            border-top: 1px solid #2a2d3a;
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        #champ-message {
+            flex: 1;
+            background-color: #0f1117;
+            border: 1px solid #2a2d3a;
+            border-radius: 10px;
+            padding: 12px 16px;
+            color: #ffffff;
+            font-size: 14px;
+            resize: none;
+            outline: none;
+            min-height: 48px;
+            max-height: 120px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        #champ-message:focus { border-color: #2ecc71; }
+        #champ-message::placeholder { color: #555; }
+
+        #btn-envoyer {
+            background-color: #2ecc71;
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+
+        #btn-envoyer:hover { background-color: #27ae60; }
+        #btn-envoyer:disabled { background-color: #555; cursor: not-allowed; }
+
+        /* ── Bienvenue ── */
+        .bienvenue {
+            text-align: center;
+            margin: auto;
+            color: #444;
+        }
+
+        .bienvenue h2 { font-size: 26px; color: #2ecc71; margin-bottom: 8px; }
+        .bienvenue p  { font-size: 13px; }
+
+        .bienvenue .exemples {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .exemple {
+            background-color: #1a1d27;
+            border: 1px solid #2a2d3a;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 13px;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .exemple:hover { border-color: #2ecc71; color: #2ecc71; }
+
+        /* ── Séparateur nouvelle conversation ── */
+        .separateur {
+            text-align: center;
+            color: #333;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .separateur::before,
+        .separateur::after {
+            content: '';
+            flex: 1;
+            border-top: 1px solid #2a2d3a;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>🤖 Assistant IA Local</h1>
+            <p>Propulsé par Ollama + llama3.2</p>
+        </div>
+        <span class="badge">● EN LIGNE</span>
+        <button id="btn-nouvelle-conv">🗑️ Nouvelle conversation</button>
+    </header>
+
+    <div id="modes">
+        <span>Mode :</span>
+        <button class="btn-mode actif" data-mode="normal"     data-prompt="">💬 Normal</button>
+        <button class="btn-mode"       data-mode="resume"     data-prompt="Tu es un expert en synthèse. Résume le texte suivant en 3 points clés courts et clairs. Texte :">📝 Résumé</button>
+        <button class="btn-mode"       data-mode="traduction" data-prompt="Traduis le texte suivant en français correct et naturel. Texte :">🌍 Traduction</button>
+        <button class="btn-mode"       data-mode="correction" data-prompt="Corrige les fautes d'orthographe et de grammaire du texte suivant. Montre le texte corrigé puis explique les corrections. Texte :">✅ Correction</button>
+    </div>
+
+    <div id="compteur">💬 0 message(s) dans cette conversation</div>
+
+    <div id="conversation">
+        <div class="bienvenue">
+            <h2>Bonjour ! 👋</h2>
+            <p>Pose-moi n'importe quelle question ou choisis un mode ci-dessus.<br/>Je me souviens du contexte de toute la conversation !</p>
+            <div class="exemples">
+                <div class="exemple" onclick="utiliserExemple(this)">C'est quoi l'intelligence artificielle ?</div>
+                <div class="exemple" onclick="utiliserExemple(this)">Explique-moi JavaScript en 3 lignes</div>
+                <div class="exemple" onclick="utiliserExemple(this)">Écris un email professionnel de candidature</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="zone-saisie">
+        <textarea
+            id="champ-message"
+            placeholder="Écris ton message ici... (Entrée pour envoyer)"
+            rows="1"
+        ></textarea>
+        <button id="btn-envoyer">Envoyer ➤</button>
+    </div>
+
+    <script>
+        const conversation   = document.getElementById('conversation')
+        const champMessage   = document.getElementById('champ-message')
+        const btnEnvoyer     = document.getElementById('btn-envoyer')
+        const compteur       = document.getElementById('compteur')
+        const btnNouvelleConv = document.getElementById('btn-nouvelle-conv')
+
+        let modeActuel = { mode: 'normal', prompt: '' }
+        let historique = []  // Stocke toute la conversation
+
+        // ── Nouvelle conversation ──
+        btnNouvelleConv.addEventListener('click', () => {
+            if (historique.length === 0) return
+
+            if (confirm('Effacer la conversation en cours ?')) {
+                historique = []
+                conversation.innerHTML = ''
+
+                // Ajouter séparateur
+                const sep = document.createElement('div')
+                sep.className = 'separateur'
+                sep.textContent = '🆕 Nouvelle conversation'
+                conversation.appendChild(sep)
+
+                mettreAJourCompteur()
+            }
+        })
+
+        // ── Gestion des modes ──
+        document.querySelectorAll('.btn-mode').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.btn-mode').forEach(b => b.classList.remove('actif'))
+                btn.classList.add('actif')
+                modeActuel = {
+                    mode: btn.dataset.mode,
+                    prompt: btn.dataset.prompt
+                }
+                champMessage.placeholder = obtenirPlaceholder(modeActuel.mode)
+                champMessage.focus()
+            })
+        })
+
+        function obtenirPlaceholder(mode) {
+            const placeholders = {
+                normal:     'Pose ta question ici... (Entrée pour envoyer)',
+                resume:     'Colle le texte à résumer ici...',
+                traduction: 'Colle le texte à traduire ici...',
+                correction: 'Colle le texte à corriger ici...'
+            }
+            return placeholders[mode]
+        }
+
+        function utiliserExemple(el) {
+            champMessage.value = el.textContent
+            champMessage.focus()
+        }
+
+        function mettreAJourCompteur() {
+            compteur.textContent = `💬 ${historique.length} message(s) dans cette conversation`
+        }
+
+        // ── Entrée pour envoyer ──
+        champMessage.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                envoyerMessage()
+            }
+        })
+
+        btnEnvoyer.addEventListener('click', envoyerMessage)
+
+        // ── Fonction principale ──
+        async function envoyerMessage() {
+            const message = champMessage.value.trim()
+            if (!message) return
+
+            const bienvenue = document.querySelector('.bienvenue')
+            if (bienvenue) bienvenue.remove()
+
+            const promptFinal = modeActuel.prompt
+                ? `${modeActuel.prompt} ${message}`
+                : message
+
+            ajouterMessage(message, 'utilisateur', modeActuel.mode)
+            champMessage.value = ''
+            btnEnvoyer.disabled = true
+
+            const chargement = document.createElement('div')
+            chargement.className = 'chargement'
+            chargement.textContent = '⏳ L\'IA réfléchit...'
+            conversation.appendChild(chargement)
+            conversation.scrollTop = conversation.scrollHeight
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: promptFinal,
+                        historique: historique  // On envoie tout l'historique
+                    })
+                })
+
+                const data = await response.json()
+                chargement.remove()
+
+                if (data.reponse) {
+                    ajouterMessage(data.reponse, 'ia', modeActuel.mode)
+
+                    // Sauvegarder dans l'historique
+                    historique.push({
+                        utilisateur: promptFinal,
+                        assistant: data.reponse
+                    })
+                    mettreAJourCompteur()
+
+                } else {
+                    ajouterMessage('❌ Erreur : ' + data.erreur, 'ia', 'normal')
+                }
+
+            } catch (error) {
+                chargement.remove()
+                ajouterMessage('❌ Impossible de contacter le serveur.', 'ia', 'normal')
+            }
+
+            btnEnvoyer.disabled = false
+            conversation.scrollTop = conversation.scrollHeight
+        }
+
+        // ── Ajouter un message ──
+        function ajouterMessage(texte, auteur, mode) {
+            const div = document.createElement('div')
+            div.className = `message ${auteur}`
+
+            const labelAuteur = document.createElement('div')
+            labelAuteur.className = 'auteur'
+            const nomAuteur = auteur === 'utilisateur' ? 'Vous' : '🤖 Assistant IA'
+            const badgeMode = mode && mode !== 'normal'
+                ? `<span class="badge-mode">${mode}</span>`
+                : ''
+            labelAuteur.innerHTML = nomAuteur + badgeMode
+
+            const contenu = document.createElement('div')
+            contenu.textContent = texte
+
+            div.appendChild(labelAuteur)
+            div.appendChild(contenu)
+
+            if (auteur === 'ia') {
+                const actions = document.createElement('div')
+                actions.className = 'actions'
+
+                const btnCopier = document.createElement('button')
+                btnCopier.className = 'btn-copier'
+                btnCopier.textContent = '📋 Copier'
+                btnCopier.onclick = () => {
+                    navigator.clipboard.writeText(texte)
+                    btnCopier.textContent = '✅ Copié !'
+                    setTimeout(() => btnCopier.textContent = '📋 Copier', 2000)
+                }
+
+                actions.appendChild(btnCopier)
+                div.appendChild(actions)
+            }
+
+            conversation.appendChild(div)
+            conversation.scrollTop = conversation.scrollHeight
+        }
+    </script>
+
+</body>
+</html>
